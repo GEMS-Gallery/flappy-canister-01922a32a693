@@ -13,13 +13,18 @@ const bird = {
     y: canvas.height / 2,
     radius: 20,
     velocity: 0,
-    gravity: 0.5,
-    jump: -10
+    gravity: 0.4,
+    jump: -8,
+    canJump: true,
+    jumpCooldown: 250,
+    rotation: 0
 };
 
 const pipes = [];
 let score = 0;
 let gameLoopId;
+let gameSpeed = 2;
+let lastJumpTime = 0;
 
 const adjectives = ['Happy', 'Silly', 'Clever', 'Brave', 'Mighty', 'Swift', 'Sneaky', 'Daring'];
 const nouns = ['Bird', 'Flyer', 'Wing', 'Beak', 'Feather', 'Nest', 'Sky', 'Cloud'];
@@ -32,11 +37,15 @@ function generateRandomName() {
 }
 
 function drawBird() {
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.rotate(bird.rotation);
     ctx.beginPath();
-    ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+    ctx.arc(0, 0, bird.radius, 0, Math.PI * 2);
     ctx.fillStyle = '#29ABE2';
     ctx.fill();
     ctx.closePath();
+    ctx.restore();
 }
 
 function drawPipes() {
@@ -60,6 +69,8 @@ function updateBird() {
         bird.y = bird.radius;
         bird.velocity = 0;
     }
+
+    bird.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, bird.velocity * 0.1));
 }
 
 function updatePipes() {
@@ -76,12 +87,13 @@ function updatePipes() {
     }
 
     pipes.forEach(pipe => {
-        pipe.x -= 2;
+        pipe.x -= gameSpeed;
 
         if (pipe.x + pipe.width < bird.x && !pipe.passed) {
             score++;
             scoreElement.textContent = score;
             pipe.passed = true;
+            gameSpeed += 0.05;
         }
 
         if (
@@ -93,7 +105,7 @@ function updatePipes() {
         }
     });
 
-    pipes.filter(pipe => pipe.x + pipe.width > 0);
+    pipes = pipes.filter(pipe => pipe.x + pipe.width > 0);
 }
 
 function draw() {
@@ -116,9 +128,11 @@ function gameLoop() {
 function startGame() {
     pipes.length = 0;
     score = 0;
+    gameSpeed = 2;
     scoreElement.textContent = score;
     bird.y = canvas.height / 2;
     bird.velocity = 0;
+    bird.rotation = 0;
     gameLoopId = requestAnimationFrame(gameLoop);
 }
 
@@ -139,11 +153,21 @@ async function updateHighScores() {
     });
 }
 
+function jump() {
+    const currentTime = Date.now();
+    if (currentTime - lastJumpTime > bird.jumpCooldown) {
+        bird.velocity = bird.jump;
+        lastJumpTime = currentTime;
+    }
+}
+
 document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
-        bird.velocity = bird.jump;
+        jump();
     }
 });
+
+canvas.addEventListener('click', jump);
 
 updateHighScores();
 startGame();
