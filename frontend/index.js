@@ -21,6 +21,16 @@ const pipes = [];
 let score = 0;
 let gameLoopId;
 
+const adjectives = ['Happy', 'Silly', 'Clever', 'Brave', 'Mighty', 'Swift', 'Sneaky', 'Daring'];
+const nouns = ['Bird', 'Flyer', 'Wing', 'Beak', 'Feather', 'Nest', 'Sky', 'Cloud'];
+
+function generateRandomName() {
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    const number = Math.floor(Math.random() * 1000);
+    return `${adjective}${noun}${number}`;
+}
+
 function drawBird() {
     ctx.beginPath();
     ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
@@ -114,11 +124,9 @@ function startGame() {
 
 async function gameOver() {
     cancelAnimationFrame(gameLoopId);
-    const playerName = prompt('Game Over! Enter your name for the high score:');
-    if (playerName) {
-        await backend.addHighScore(playerName, score);
-        updateHighScores();
-    }
+    const playerName = generateRandomName();
+    await backend.addHighScore(playerName, score);
+    updateHighScores();
 }
 
 async function updateHighScores() {
